@@ -1,0 +1,101 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       Int     @id @default(autoincrement())
+  name     String
+  email    String  @unique
+  password String
+  avatar   String?
+  phone    String?
+  role     Role    @default(user)
+
+  carts  Cart[]
+  orders Order[]
+}
+
+model Category {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  products Product[]
+}
+
+model Product {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String
+  price       Int
+  stock       Int
+  status      Boolean @default(false)
+  category_id Int
+
+  categories Category       @relation(fields: [category_id], references: [id])
+  images     ProductImage[]
+  carts      Cart[]
+}
+
+model ProductImage {
+  id         Int    @id @default(autoincrement())
+  image_url  String
+  public_id  String
+  product_id Int
+
+  product Product @relation(fields: [product_id], references: [id])
+}
+
+model Cart {
+  id         Int     @id @default(autoincrement())
+  user_id    Int
+  product_id Int
+  quantity   Int
+  isCheckout Boolean @default(false)
+
+  user    User    @relation(fields: [user_id], references: [id])
+  product Product @relation(fields: [product_id], references: [id])
+  orders  Order[]
+}
+
+model Order {
+  id           Int     @id @default(autoincrement())
+  status       String? @default("pending")
+  order_id     String?
+  gross_amount Int?    @default(0)
+  price        Int?    @default(0)
+  email        String?
+  name         String?
+  user_id      Int?
+  cart_item    Int?
+
+  user User? @relation(fields: [user_id], references: [id])
+  cart Cart? @relation(fields: [cart_item], references: [id])
+}
+
+model Transaction {
+  id                 Int     @id @default(autoincrement())
+  transaction_status String? @default("pending")
+  transaction_id     String?
+  order_id_midtrans  String?
+  gross_amount       Int?    @default(0)
+  payment_type       String?
+  fraud_status       String?
+  status_code        String?
+  transaction_time   String?
+}
+
+enum Role {
+  admin
+  user
+}
