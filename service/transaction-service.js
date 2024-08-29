@@ -78,11 +78,6 @@ module.exports = {
           isCheckout: true,
         },
       });
-
-      //   jika is checkout true, maka delete cart
-      await prisma.cart.deleteMany({
-        where: { id: cart_item },
-      });
     }
     res.status(200).send("Webhook dari Midtrans berhasil diterima");
   },

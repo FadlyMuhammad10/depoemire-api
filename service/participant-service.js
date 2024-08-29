@@ -107,6 +107,7 @@ module.exports = {
     const cart = await prisma.cart.findMany({
       where: {
         user_id: userId,
+        isCheckout: false,
       },
       include: {
         product: {
