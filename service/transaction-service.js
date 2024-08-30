@@ -47,7 +47,7 @@ module.exports = {
 
       // Temukan semua item dalam cart terkait
       const cartItems = await prisma.cart.findMany({
-        where: { id: cart_item },
+        where: { id: cart_item, isCheckout: false },
         include: { product: true },
       });
 
@@ -65,7 +65,7 @@ module.exports = {
 
       //   update is checkouted
       await prisma.cart.updateMany({
-        where: { id: cart_item },
+        where: { id: cart_item, isCheckout: false },
         data: {
           isCheckout: true,
         },
