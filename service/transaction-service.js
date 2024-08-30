@@ -79,6 +79,7 @@ module.exports = {
         },
       });
     }
-    res.status(200).send("Webhook dari Midtrans berhasil diterima");
+
+    return res.status(200).send("Webhook dari Midtrans berhasil diterima");
   },
 };
