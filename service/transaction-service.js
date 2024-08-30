@@ -17,19 +17,6 @@ module.exports = {
       );
     }
 
-    // Perbarui status transaksi sesuai dengan yang diterima dari webhook
-    transaction.transaction_status = webhookData.transaction_status;
-    transaction.transaction_id = webhookData.transaction_id;
-    transaction.fraud_status = webhookData.fraud_status;
-    transaction.payment_type = webhookData.payment_type;
-    transaction.status_code = webhookData.status_code;
-    transaction.transaction_time = webhookData.transaction_time;
-
-    await prisma.transaction.update({
-      where: { id: transaction.id },
-      data: transaction,
-    });
-
     // Temukan pesanan berdasarkan order_id yang terkait dengan transaksi
     const order = await prisma.order.findFirst({
       where: { order_id: transaction.order_id_midtrans },
@@ -43,6 +30,19 @@ module.exports = {
     }
 
     if (webhookData.transaction_status === "settlement") {
+      // Perbarui status transaksi sesuai dengan yang diterima dari webhook
+      transaction.transaction_status = webhookData.transaction_status;
+      transaction.transaction_id = webhookData.transaction_id;
+      transaction.fraud_status = webhookData.fraud_status;
+      transaction.payment_type = webhookData.payment_type;
+      transaction.status_code = webhookData.status_code;
+      transaction.transaction_time = webhookData.transaction_time;
+
+      await prisma.transaction.update({
+        where: { id: transaction.id },
+        data: transaction,
+      });
+
       const { cart_item } = order;
 
       // Temukan semua item dalam cart terkait
@@ -79,21 +79,44 @@ module.exports = {
         data: order,
       });
     } else if (webhookData.transaction_status === "pending") {
+      // Perbarui status transaksi sesuai dengan yang diterima dari webhook
+      transaction.transaction_status = webhookData.transaction_status;
+      transaction.transaction_id = webhookData.transaction_id;
+      transaction.fraud_status = webhookData.fraud_status;
+      transaction.payment_type = webhookData.payment_type;
+      transaction.status_code = webhookData.status_code;
+      transaction.transaction_time = webhookData.transaction_time;
+
+      await prisma.transaction.update({
+        where: { id: transaction.id },
+        data: transaction,
+      });
+
       // Perbarui status pesanan sesuai dengan status transaksi yang diterima dari webhook
-      order.status = "pending";
+      order.status = webhookData.transaction_status;
       await prisma.order.update({
         where: { id: order.id },
         data: order,
       });
     } else {
+      // Perbarui status transaksi sesuai dengan yang diterima dari webhook
+      transaction.transaction_status = webhookData.transaction_status;
+      transaction.transaction_id = webhookData.transaction_id;
+      transaction.fraud_status = webhookData.fraud_status;
+      transaction.payment_type = webhookData.payment_type;
+      transaction.status_code = webhookData.status_code;
+      transaction.transaction_time = webhookData.transaction_time;
+
+      await prisma.transaction.update({
+        where: { id: transaction.id },
+        data: transaction,
+      });
       // Perbarui status pesanan sesuai dengan status transaksi yang diterima dari webhook
-      order.status = "expire";
+      order.status = webhookData.transaction_status;
       await prisma.order.update({
         where: { id: order.id },
         data: order,
       });
     }
-
-    return res.status(200).send("Webhook dari Midtrans berhasil diterima");
   },
 };
