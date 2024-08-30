@@ -83,6 +83,7 @@ module.exports = {
       where: {
         user_id: userId,
         product_id,
+        isCheckout: false,
       },
     });
     if (checkCart.length > 0) {
