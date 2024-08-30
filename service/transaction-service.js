@@ -6,7 +6,7 @@ module.exports = {
     const webhookData = req.body;
 
     // Temukan transaksi berdasarkan order_id dari webhook
-    const transaction = await prisma.transaction.findUnique({
+    const transaction = await prisma.transaction.findFirst({
       where: { order_id_midtrans: webhookData.order_id },
     });
 
@@ -31,7 +31,7 @@ module.exports = {
     });
 
     // Temukan pesanan berdasarkan order_id yang terkait dengan transaksi
-    const order = await prisma.order.findUnique({
+    const order = await prisma.order.findFirst({
       where: { order_id: transaction.order_id_midtrans },
     });
 
@@ -41,14 +41,6 @@ module.exports = {
         `Pesanan tidak ditemukan dengan order_id: :  ${webhookData.order_id}`
       );
     }
-
-    // Perbarui status pesanan sesuai dengan status transaksi yang diterima dari webhook
-    order.status = webhookData.transaction_status;
-
-    await prisma.order.update({
-      where: { id: order.id },
-      data: order,
-    });
 
     if (webhookData.transaction_status === "settlement") {
       const { cart_item } = order;
@@ -77,6 +69,14 @@ module.exports = {
         data: {
           isCheckout: true,
         },
+      });
+
+      // Perbarui status pesanan sesuai dengan status transaksi yang diterima dari webhook
+      order.status = "settlement";
+
+      await prisma.order.update({
+        where: { id: order.id },
+        data: order,
       });
     }
 
