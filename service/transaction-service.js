@@ -42,15 +42,15 @@ module.exports = {
       );
     }
 
+    // Perbarui status pesanan sesuai dengan status transaksi yang diterima dari webhook
+    order.status = webhookData.transaction_status;
+
+    await prisma.order.update({
+      where: { id: order.id },
+      data: order,
+    });
+
     if (webhookData.transaction_status === "settlement") {
-      // Perbarui status pesanan sesuai dengan status transaksi yang diterima dari webhook
-      order.status = webhookData.transaction_status;
-
-      await prisma.order.update({
-        where: { id: order.id },
-        data: order,
-      });
-
       const { cart_item } = order;
 
       // Temukan semua item dalam cart terkait
