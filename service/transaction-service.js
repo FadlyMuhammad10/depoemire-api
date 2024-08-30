@@ -78,6 +78,20 @@ module.exports = {
         where: { id: order.id },
         data: order,
       });
+    } else if (webhookData.transaction_status === "pending") {
+      // Perbarui status pesanan sesuai dengan status transaksi yang diterima dari webhook
+      order.status = "pending";
+      await prisma.order.update({
+        where: { id: order.id },
+        data: order,
+      });
+    } else {
+      // Perbarui status pesanan sesuai dengan status transaksi yang diterima dari webhook
+      order.status = "expire";
+      await prisma.order.update({
+        where: { id: order.id },
+        data: order,
+      });
     }
 
     return res.status(200).send("Webhook dari Midtrans berhasil diterima");
