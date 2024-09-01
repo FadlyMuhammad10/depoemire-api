@@ -66,10 +66,12 @@ const order = async (req, res, next) => {
   try {
     const result = await createOrder(req);
     res.status(200).json({
-      data: result.order,
-      token: result.transactionToken.token,
-      url: result.transactionToken.redirect_url,
-      transaction: result.transaction,
+      data: {
+        order: result.order,
+        token: result.transactionToken.token,
+        url: result.transactionToken.redirect_url,
+        transaction: result.transaction,
+      },
     });
   } catch (error) {
     next(error);
