@@ -192,4 +192,24 @@ module.exports = {
       transaction,
     };
   },
+
+  showOrder: async (req) => {
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwtDecode(token);
+    const { userId } = decoded;
+
+    const order = await prisma.order.findMany({
+      where: {
+        user_id: userId,
+      },
+      include: {
+        cart: true,
+      },
+      orderBy: {
+        id: "desc",
+      },
+    });
+    console.log(order);
+    return order;
+  },
 };

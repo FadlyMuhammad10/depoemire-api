@@ -5,6 +5,7 @@ const {
   showCart,
   deleteCart,
   createOrder,
+  showOrder,
 } = require("../service/participant-service");
 
 const show = async (req, res, next) => {
@@ -78,6 +79,17 @@ const order = async (req, res, next) => {
   }
 };
 
+const showOrderProduct = async (req, res, next) => {
+  try {
+    const result = await showOrder(req);
+    res.status(200).json({
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   show,
   showDetail,
@@ -85,4 +97,5 @@ module.exports = {
   showCartProduct,
   deleteCartProduct,
   order,
+  showOrderProduct,
 };

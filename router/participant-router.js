@@ -8,6 +8,7 @@ const {
   showCartProduct,
   deleteCartProduct,
   order,
+  showOrderProduct,
 } = require("../controller/participant-controller");
 
 const router = express.Router();
@@ -20,4 +21,5 @@ router.get("/api/participant/carts", auth, showCartProduct);
 router.delete("/api/participant/cart/delete/:id", auth, deleteCartProduct);
 
 router.post("/api/participant/order/create", auth, order);
+router.get("/api/participant/orders", auth, showOrderProduct);
 module.exports = router;
