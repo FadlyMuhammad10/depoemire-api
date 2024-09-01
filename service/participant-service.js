@@ -209,7 +209,7 @@ module.exports = {
         id: "desc",
       },
     });
-    console.log(order);
+
     return order;
   },
 };
