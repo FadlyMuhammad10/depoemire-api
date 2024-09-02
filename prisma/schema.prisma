@@ -78,6 +78,7 @@ model Order {
   name         String?
   user_id      Int?
   cart_item    Int?
+  date         String?
 
   user User? @relation(fields: [user_id], references: [id])
   cart Cart? @relation(fields: [cart_item], references: [id])

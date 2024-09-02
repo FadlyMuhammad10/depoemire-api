@@ -203,7 +203,19 @@ module.exports = {
         user_id: userId,
       },
       include: {
-        cart: true,
+        cart: {
+          include: {
+            product: {
+              include: {
+                images: {
+                  orderBy: {
+                    id: "asc",
+                  },
+                },
+              },
+            },
+          },
+        },
       },
       orderBy: {
         id: "desc",

@@ -73,6 +73,7 @@ module.exports = {
 
       // Perbarui status pesanan sesuai dengan status transaksi yang diterima dari webhook
       order.status = "settlement";
+      order.date = webhookData.transaction_time;
 
       await prisma.order.update({
         where: { id: order.id },
@@ -94,6 +95,8 @@ module.exports = {
 
       // Perbarui status pesanan sesuai dengan status transaksi yang diterima dari webhook
       order.status = webhookData.transaction_status;
+      order.date = webhookData.transaction_time;
+
       await prisma.order.update({
         where: { id: order.id },
         data: order,
@@ -111,8 +114,11 @@ module.exports = {
         where: { id: transaction.id },
         data: transaction,
       });
+
       // Perbarui status pesanan sesuai dengan status transaksi yang diterima dari webhook
       order.status = webhookData.transaction_status;
+      order.date = webhookData.transaction_time;
+
       await prisma.order.update({
         where: { id: order.id },
         data: order,
