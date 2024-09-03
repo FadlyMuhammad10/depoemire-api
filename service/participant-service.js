@@ -29,6 +29,9 @@ module.exports = {
         name: true,
         status: true,
       },
+      orderBy: {
+        id: "desc",
+      },
     });
 
     return result;
