@@ -225,6 +225,7 @@ module.exports = {
       select: {
         id: true,
         status: true,
+        date: true,
         cart: {
           select: {
             product: {
