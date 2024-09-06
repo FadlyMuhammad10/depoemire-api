@@ -299,6 +299,14 @@ module.exports = {
             },
           },
         },
+        user: {
+          select: {
+            name: true,
+            email: true,
+            avatar: true,
+            phone: true,
+          },
+        },
       },
     });
     return order;
