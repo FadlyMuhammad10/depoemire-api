@@ -6,6 +6,7 @@ const {
   deleteCart,
   createOrder,
   showOrder,
+  showDetailOrder,
   completeShippment,
 } = require("../service/participant-service");
 
@@ -91,6 +92,17 @@ const showOrderProduct = async (req, res, next) => {
   }
 };
 
+const showDetailOrderProduct = async (req, res, next) => {
+  try {
+    const result = await showDetailOrder(req);
+    res.status(200).json({
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const completeShipping = async (req, res, next) => {
   try {
     const result = await completeShippment(req);
@@ -110,5 +122,6 @@ module.exports = {
   deleteCartProduct,
   order,
   showOrderProduct,
+  showDetailOrderProduct,
   completeShipping,
 };

@@ -222,9 +222,11 @@ module.exports = {
       where: {
         user_id: userId,
       },
-      include: {
+      select: {
+        id: true,
+        status: true,
         cart: {
-          include: {
+          select: {
             product: {
               include: {
                 images: {
@@ -237,11 +239,67 @@ module.exports = {
           },
         },
       },
+      // include: {
+      //   cart: {
+      //     select: {
+      //       product: {
+      //         include: {
+      //           images: {
+      //             orderBy: {
+      //               id: "asc",
+      //             },
+      //           },
+      //         },
+      //       },
+      //     },
+      //     // include: {
+      //     //   product: {
+      //     //     include: {
+      //     //       images: {
+      //     //         orderBy: {
+      //     //           id: "asc",
+      //     //         },
+      //     //       },
+      //     //     },
+      //     //   },
+      //     // },
+      //   },
+      // },
       orderBy: {
         id: "desc",
       },
     });
 
+    return order;
+  },
+
+  showDetailOrder: async (req) => {
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwtDecode(token);
+    const { userId } = decoded;
+
+    const { id } = req.params;
+    const order = await prisma.order.findFirst({
+      where: {
+        user_id: userId,
+        id: Number(id),
+      },
+      include: {
+        cart: {
+          select: {
+            product: {
+              include: {
+                images: {
+                  orderBy: {
+                    id: "asc",
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
     return order;
   },
 
