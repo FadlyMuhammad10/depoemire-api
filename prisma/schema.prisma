@@ -69,16 +69,22 @@ model Cart {
 }
 
 model Order {
-  id           Int     @id @default(autoincrement())
-  status       String? @default("pending")
-  order_id     String?
-  gross_amount Int?    @default(0)
-  price        Int?    @default(0)
-  email        String?
-  name         String?
-  user_id      Int?
-  cart_item    Int?
-  date         String?
+  id               Int             @id @default(autoincrement())
+  status           String?         @default("pending")
+  order_id         String?
+  gross_amount     Int?            @default(0)
+  price            Int?            @default(0)
+  email            String?
+  name             String?
+  user_id          Int?
+  cart_item        Int?
+  date             String?
+  shipping_cost    Int?            @default(0)
+  origin_city      Int?
+  destination_city Int?
+  status_shipment  StatusShipment? @default(processing)
+  courier          String?
+  receipt          String?
 
   user User? @relation(fields: [user_id], references: [id])
   cart Cart? @relation(fields: [cart_item], references: [id])
@@ -99,4 +105,10 @@ model Transaction {
 enum Role {
   admin
   user
+}
+
+enum StatusShipment {
+  processing
+  delivered
+  completed
 }

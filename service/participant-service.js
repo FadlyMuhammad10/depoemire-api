@@ -4,6 +4,7 @@ const prisma = require("../lib/prisma");
 const { createSchema } = require("../validation/cart-validation");
 const midtransClient = require("midtrans-client");
 const uuid = require("uuid");
+const { calculateShippingCost } = require("./rajaongkir-service");
 
 let snap = new midtransClient.Snap({
   // Set to true if you want Production Environment (accept real transaction).
@@ -155,7 +156,19 @@ module.exports = {
     const decoded = jwtDecode(token);
     const { name, email, userId } = decoded;
 
-    const { cart_item, price } = req.body;
+    const { origin, destination, weight, courier, cart_item, price } = req.body;
+
+    // Hitung ongkir menggunakan RajaOngkir
+    const shippingCosts = await calculateShippingCost(
+      origin,
+      destination,
+      weight,
+      courier
+    );
+    const shippingCost = shippingCosts[0].cost[0].value;
+
+    // Tambahkan shipping cost ke gross amount
+    const totalPrice = parseInt(price) + parseInt(shippingCost);
 
     const order = await prisma.order.create({
       data: {
@@ -165,7 +178,11 @@ module.exports = {
         cart_item,
         order_id: uuid.v4(),
         price: parseInt(price),
-        gross_amount: parseInt(price),
+        gross_amount: parseInt(totalPrice),
+        origin_city: origin,
+        destination_city: destination,
+        courier,
+        shipping_cost: parseInt(shippingCost),
       },
     });
 
@@ -222,6 +239,41 @@ module.exports = {
       },
       orderBy: {
         id: "desc",
+      },
+    });
+
+    return order;
+  },
+
+  completeShippment: async (req) => {
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwtDecode(token);
+    const { userId } = decoded;
+
+    const { id } = req.params;
+
+    const { status_shipment } = req.body;
+
+    if (!["completed"].includes(status_shipment)) {
+      throw new ResponseError(400, "Status harus  completed");
+    }
+
+    const order = await prisma.order.findFirst({
+      where: {
+        user_id: userId,
+      },
+    });
+
+    if (!order) {
+      throw new ResponseError(400, "order not found");
+    }
+
+    await prisma.order.update({
+      where: {
+        id: Number(id),
+      },
+      data: {
+        status_shipment,
       },
     });
 

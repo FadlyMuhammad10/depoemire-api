@@ -6,6 +6,7 @@ const {
   deleteCart,
   createOrder,
   showOrder,
+  completeShippment,
 } = require("../service/participant-service");
 
 const show = async (req, res, next) => {
@@ -90,6 +91,17 @@ const showOrderProduct = async (req, res, next) => {
   }
 };
 
+const completeShipping = async (req, res, next) => {
+  try {
+    const result = await completeShippment(req);
+    res.status(200).json({
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   show,
   showDetail,
@@ -98,4 +110,5 @@ module.exports = {
   deleteCartProduct,
   order,
   showOrderProduct,
+  completeShipping,
 };
