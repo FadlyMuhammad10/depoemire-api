@@ -4,7 +4,10 @@ const prisma = require("../lib/prisma");
 const { createSchema } = require("../validation/cart-validation");
 const midtransClient = require("midtrans-client");
 const uuid = require("uuid");
-const { calculateShippingCost } = require("./rajaongkir-service");
+const {
+  calculateShippingCost,
+  getCityDetail,
+} = require("./rajaongkir-service");
 
 let snap = new midtransClient.Snap({
   // Set to true if you want Production Environment (accept real transaction).
@@ -165,7 +168,9 @@ module.exports = {
       weight,
       courier
     );
-    const shippingCost = shippingCosts[0].cost[0].value;
+    const shippingCost = shippingCosts[1].cost[0].value;
+
+    const destinationCityDetail = await getCityDetail(destination);
 
     // Tambahkan shipping cost ke gross amount
     const totalPrice = parseInt(price) + parseInt(shippingCost);
@@ -183,6 +188,8 @@ module.exports = {
         destination_city: destination,
         courier,
         shipping_cost: parseInt(shippingCost),
+        destination_city_name: destinationCityDetail.cityName,
+        destination_postal_code: destinationCityDetail.postalCode,
       },
     });
 

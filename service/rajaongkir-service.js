@@ -40,6 +40,21 @@ module.exports = {
       }
     );
 
-    return result.data.rajaongkir.results[1].costs;
+    return result.data.rajaongkir.results[0].costs;
+  },
+
+  getCityDetail: async (cityId) => {
+    const result = await axios.get(
+      `https://api.rajaongkir.com/starter/city?id=${cityId}`,
+      {
+        headers: {
+          key: RAJAONGKIR_API_KEY,
+        },
+      }
+    );
+    // Ambil nama kota dan kode pos dari response
+    const cityName = result.data.rajaongkir.results.city_name;
+    const postalCode = result.data.rajaongkir.results.postal_code;
+    return { cityName, postalCode };
   },
 };
