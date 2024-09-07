@@ -52,9 +52,11 @@ module.exports = {
         },
       }
     );
-    // Ambil nama kota dan kode pos dari response
+    // Ambil nama provinsi, kota dan kode pos dari response
+    const provinceName = result.data.rajaongkir.results.province;
     const cityName = result.data.rajaongkir.results.city_name;
     const postalCode = result.data.rajaongkir.results.postal_code;
-    return { cityName, postalCode };
+
+    return { cityName, postalCode, provinceName };
   },
 };

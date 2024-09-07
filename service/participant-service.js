@@ -190,6 +190,7 @@ module.exports = {
         shipping_cost: parseInt(shippingCost),
         destination_city_name: destinationCityDetail.cityName,
         destination_postal_code: destinationCityDetail.postalCode,
+        destination_province_name: destinationCityDetail.provinceName,
       },
     });
 
