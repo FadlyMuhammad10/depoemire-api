@@ -1,7 +1,7 @@
 const {
   getProvince,
   getCity,
-  calculateShippingCost,
+  checkCost,
 } = require("../service/rajaongkir-service");
 
 const province = async (req, res, next) => {
@@ -28,7 +28,7 @@ const city = async (req, res, next) => {
 
 const shippingCost = async (req, res, next) => {
   try {
-    const result = await calculateShippingCost(req);
+    const result = await checkCost(req);
     res.status(200).json({
       data: result,
     });

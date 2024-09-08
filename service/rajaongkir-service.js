@@ -59,4 +59,23 @@ module.exports = {
 
     return { cityName, postalCode, provinceName };
   },
+  checkCost: async (req) => {
+    const { origin, destination, weight, courier } = req.body;
+    const result = await axios.post(
+      `https://api.rajaongkir.com/starter/cost`,
+      {
+        origin, // ID kota asal
+        destination, // ID kota tujuan
+        weight, // Berat paket dalam gram
+        courier, // Nama kurir (jne, pos, tiki, dll)
+      },
+      {
+        headers: {
+          key: RAJAONGKIR_API_KEY,
+        },
+      }
+    );
+
+    return result.data.rajaongkir.results[0].costs[1].cost[0].value;
+  },
 };
