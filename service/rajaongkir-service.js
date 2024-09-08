@@ -40,7 +40,7 @@ module.exports = {
       }
     );
 
-    return result.data.rajaongkir.results[0].costs;
+    return result.data.rajaongkir.results[0].costs[1].cost[0].value;
   },
 
   getCityDetail: async (cityId) => {

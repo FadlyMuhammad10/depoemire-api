@@ -168,7 +168,7 @@ module.exports = {
       weight,
       courier
     );
-    const shippingCost = shippingCosts[1].cost[0].value;
+    const shippingCost = shippingCosts;
 
     const destinationCityDetail = await getCityDetail(destination);
 
