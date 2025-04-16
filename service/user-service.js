@@ -4,7 +4,7 @@ const { ResponseError } = require("../error/response-error");
 const prisma = require("../lib/prisma");
 const { createJwt, createPayloadUser } = require("../utils");
 
-const createUser = async (req) => {
+const createUser = async (req, res) => {
   const validationResult = signupSchema.safeParse(req.body);
 
   if (!validationResult.success) {
@@ -14,6 +14,17 @@ const createUser = async (req) => {
   const { name, email, password } = validationResult.data;
 
   const hash = await bcrypt.hash(password, 10);
+
+  // check email already exist
+  const emailExist = await prisma.user.findUnique({
+    where: {
+      email,
+    },
+  });
+
+  if (emailExist) {
+    return res.status(400).json({ errors: "Email already exist" });
+  }
 
   const user = await prisma.user.create({
     data: {

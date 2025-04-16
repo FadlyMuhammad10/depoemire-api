@@ -85,7 +85,7 @@ module.exports = {
       throw new ResponseError(400, `stock has only: ${product.stock}`);
     }
 
-    // check cart
+    //check cart
     const checkCart = await prisma.cart.findMany({
       where: {
         user_id: userId,
@@ -94,17 +94,28 @@ module.exports = {
       },
     });
     if (checkCart.length > 0) {
-      throw new ResponseError(400, "product already in cart");
+      // throw new ResponseError(400, "product already in cart");
+      await prisma.cart.updateMany({
+        where: {
+          user_id: userId,
+          product_id,
+          isCheckout: false,
+        },
+        data: {
+          quantity: checkCart[0].quantity + quantity,
+        },
+      });
+    } else {
+      await prisma.cart.create({
+        data: {
+          user_id: userId,
+          product_id,
+          quantity,
+        },
+      });
     }
 
-    const cart = await prisma.cart.create({
-      data: {
-        user_id: userId,
-        product_id,
-        quantity,
-      },
-    });
-    return cart;
+    return product;
   },
 
   showCart: async (req) => {
