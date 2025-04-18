@@ -1,8 +1,6 @@
 const { jwtDecode } = require("jwt-decode");
 const prisma = require("../lib/prisma");
 const {
-  addCart,
-  deleteCart,
   createOrder,
   showOrder,
   showDetailOrder,
@@ -161,17 +159,30 @@ const showCartProduct = async (req, res, next) => {
       data: cart,
     });
   } catch (error) {
+    console.log("error", error);
     next(error);
   }
 };
 
 const deleteCartProduct = async (req, res, next) => {
   try {
-    const result = await deleteCart(req);
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwtDecode(token);
+    const { userId } = decoded;
+
+    const { id } = req.params;
+    const cart = await prisma.cart.delete({
+      where: {
+        id: Number(id),
+        user_id: userId,
+      },
+    });
+
     res.status(200).json({
-      data: result,
+      data: cart,
     });
   } catch (error) {
+    console.log("error", error);
     next(error);
   }
 };
