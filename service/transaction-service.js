@@ -20,6 +20,13 @@ module.exports = {
     // Temukan pesanan berdasarkan order_id yang terkait dengan transaksi
     const order = await prisma.order.findFirst({
       where: { order_id: transaction.order_id_midtrans },
+      include: {
+        carts: {
+          include: {
+            cart: true,
+          },
+        },
+      },
     });
 
     if (!order) {
@@ -29,26 +36,57 @@ module.exports = {
       );
     }
 
+    // Update transaction detail regardless of status
+    const updatedTransaction = await prisma.transaction.update({
+      where: { id: transaction.id },
+      data: {
+        transaction_status: webhookData.transaction_status,
+        transaction_id: webhookData.transaction_id,
+        fraud_status: webhookData.fraud_status,
+        payment_type: webhookData.payment_type,
+        status_code: webhookData.status_code,
+        transaction_time: webhookData.transaction_time,
+      },
+    });
+
+    // Update order status and date
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        status: webhookData.transaction_status,
+        date: webhookData.transaction_time,
+      },
+    });
+
     if (webhookData.transaction_status === "settlement") {
       // Perbarui status transaksi sesuai dengan yang diterima dari webhook
-      transaction.transaction_status = webhookData.transaction_status;
-      transaction.transaction_id = webhookData.transaction_id;
-      transaction.fraud_status = webhookData.fraud_status;
-      transaction.payment_type = webhookData.payment_type;
-      transaction.status_code = webhookData.status_code;
-      transaction.transaction_time = webhookData.transaction_time;
+      // transaction.transaction_status = webhookData.transaction_status;
+      // transaction.transaction_id = webhookData.transaction_id;
+      // transaction.fraud_status = webhookData.fraud_status;
+      // transaction.payment_type = webhookData.payment_type;
+      // transaction.status_code = webhookData.status_code;
+      // transaction.transaction_time = webhookData.transaction_time;
 
-      await prisma.transaction.update({
-        where: { id: transaction.id },
-        data: transaction,
-      });
+      // await prisma.transaction.update({
+      //   where: { id: transaction.id },
+      //   data: transaction,
+      // });
 
-      const { cart_item } = order;
+      // const { cart_item } = order;
+
+      const cartIds = order.carts.map((oc) => oc.cart_id);
 
       // Temukan semua item dalam cart terkait
       const cartItems = await prisma.cart.findMany({
-        where: { id: cart_item, isCheckout: false },
-        include: { product: true },
+        // where: { id: cart_item, isCheckout: false },
+        // include: { product: true },
+        where: {
+          id: { in: cartIds },
+          isCheckout: false,
+        },
+        include: {
+          product: true,
+        },
       });
 
       // Kurangi stok produk berdasarkan item dalam cart
@@ -65,7 +103,7 @@ module.exports = {
 
       //   update is checkouted
       await prisma.cart.updateMany({
-        where: { id: cart_item, isCheckout: false },
+        where: { id: { in: cartIds }, isCheckout: false },
         data: {
           isCheckout: true,
         },
@@ -75,54 +113,57 @@ module.exports = {
       order.status = "settlement";
       order.date = webhookData.transaction_time;
 
-      await prisma.order.update({
-        where: { id: order.id },
-        data: order,
-      });
-    } else if (webhookData.transaction_status === "pending") {
-      // Perbarui status transaksi sesuai dengan yang diterima dari webhook
-      transaction.transaction_status = webhookData.transaction_status;
-      transaction.transaction_id = webhookData.transaction_id;
-      transaction.fraud_status = webhookData.fraud_status;
-      transaction.payment_type = webhookData.payment_type;
-      transaction.status_code = webhookData.status_code;
-      transaction.transaction_time = webhookData.transaction_time;
+      // await prisma.order.update({
+      //   where: { id: order.id },
+      //   data: order,
+      // });
 
-      await prisma.transaction.update({
-        where: { id: transaction.id },
-        data: transaction,
-      });
-
-      // Perbarui status pesanan sesuai dengan status transaksi yang diterima dari webhook
-      order.status = webhookData.transaction_status;
-      order.date = webhookData.transaction_time;
-
-      await prisma.order.update({
-        where: { id: order.id },
-        data: order,
-      });
-    } else {
-      // Perbarui status transaksi sesuai dengan yang diterima dari webhook
-      transaction.transaction_status = webhookData.transaction_status;
-      transaction.transaction_id = webhookData.transaction_id;
-      transaction.fraud_status = webhookData.fraud_status;
-      transaction.payment_type = webhookData.payment_type;
-      transaction.status_code = webhookData.status_code;
-      transaction.transaction_time = webhookData.transaction_time;
-
-      await prisma.transaction.update({
-        where: { id: transaction.id },
-        data: transaction,
-      });
-
-      // Perbarui status pesanan sesuai dengan status transaksi yang diterima dari webhook
-      order.status = webhookData.transaction_status;
-      order.date = webhookData.transaction_time;
-
-      await prisma.order.update({
-        where: { id: order.id },
-        data: order,
-      });
+      res.status(200).json({ message: "Webhook processed successfully" });
     }
+    // else if (webhookData.transaction_status === "pending") {
+    //   // Perbarui status transaksi sesuai dengan yang diterima dari webhook
+    //   transaction.transaction_status = webhookData.transaction_status;
+    //   transaction.transaction_id = webhookData.transaction_id;
+    //   transaction.fraud_status = webhookData.fraud_status;
+    //   transaction.payment_type = webhookData.payment_type;
+    //   transaction.status_code = webhookData.status_code;
+    //   transaction.transaction_time = webhookData.transaction_time;
+
+    //   await prisma.transaction.update({
+    //     where: { id: transaction.id },
+    //     data: transaction,
+    //   });
+
+    //   // Perbarui status pesanan sesuai dengan status transaksi yang diterima dari webhook
+    //   order.status = webhookData.transaction_status;
+    //   order.date = webhookData.transaction_time;
+
+    //   await prisma.order.update({
+    //     where: { id: order.id },
+    //     data: order,
+    //   });
+    // } else {
+    //   // Perbarui status transaksi sesuai dengan yang diterima dari webhook
+    //   transaction.transaction_status = webhookData.transaction_status;
+    //   transaction.transaction_id = webhookData.transaction_id;
+    //   transaction.fraud_status = webhookData.fraud_status;
+    //   transaction.payment_type = webhookData.payment_type;
+    //   transaction.status_code = webhookData.status_code;
+    //   transaction.transaction_time = webhookData.transaction_time;
+
+    //   await prisma.transaction.update({
+    //     where: { id: transaction.id },
+    //     data: transaction,
+    //   });
+
+    //   // Perbarui status pesanan sesuai dengan status transaksi yang diterima dari webhook
+    //   order.status = webhookData.transaction_status;
+    //   order.date = webhookData.transaction_time;
+
+    //   await prisma.order.update({
+    //     where: { id: order.id },
+    //     data: order,
+    //   });
+    // }
   },
 };
