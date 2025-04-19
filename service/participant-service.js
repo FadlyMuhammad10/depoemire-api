@@ -170,7 +170,15 @@ module.exports = {
     const decoded = jwtDecode(token);
     const { name, email, userId } = decoded;
 
-    const { origin, destination, weight, courier, cart_item, price } = req.body;
+    const {
+      origin,
+      destination,
+      weight,
+      courier,
+      cart_item,
+      price,
+      destination_postal_code,
+    } = req.body;
 
     // Hitung ongkir menggunakan RajaOngkir
     const shippingCosts = await calculateShippingCost(
@@ -191,7 +199,6 @@ module.exports = {
         name,
         email,
         user_id: userId,
-        cart_item,
         order_id: uuid.v4(),
         price: parseInt(price),
         gross_amount: parseInt(totalPrice),
@@ -200,8 +207,13 @@ module.exports = {
         courier,
         shipping_cost: parseInt(shippingCost),
         destination_city_name: destinationCityDetail.cityName,
-        destination_postal_code: destinationCityDetail.postalCode,
+        destination_postal_code: destination_postal_code,
         destination_province_name: destinationCityDetail.provinceName,
+        carts: {
+          createMany: {
+            data: cart_item,
+          },
+        },
       },
     });
 

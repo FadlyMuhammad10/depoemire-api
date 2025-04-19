@@ -1,11 +1,20 @@
 const { jwtDecode } = require("jwt-decode");
 const prisma = require("../lib/prisma");
+const midtransClient = require("midtrans-client");
 const {
-  createOrder,
   showOrder,
   showDetailOrder,
   completeShippment,
 } = require("../service/participant-service");
+
+const uuid = require("uuid");
+
+let snap = new midtransClient.Snap({
+  // Set to true if you want Production Environment (accept real transaction).
+  isProduction: false,
+  serverKey: process.env.server_key,
+  clientKey: process.env.client_key,
+});
 
 const show = async (req, res, next) => {
   try {
@@ -189,13 +198,74 @@ const deleteCartProduct = async (req, res, next) => {
 
 const order = async (req, res, next) => {
   try {
-    const result = await createOrder(req);
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwtDecode(token);
+    const { userId } = decoded;
+
+    const {
+      name,
+      email,
+      origin_city,
+      courier,
+      cart_item,
+      price,
+      destination_postal_code,
+      destination_city,
+      destination_province_name,
+      destination_city_name,
+      shipping_cost,
+    } = req.body;
+
+    const order = await prisma.order.create({
+      data: {
+        order_id: uuid.v4(),
+        name,
+        email,
+        user_id: userId,
+        date: new Date().toDateString(),
+        price: parseInt(price),
+        gross_amount: parseInt(price),
+        shipping_cost: parseInt(shipping_cost), // contoh
+        origin_city: parseInt(origin_city),
+        destination_city: parseInt(destination_city),
+        courier,
+        destination_city_name,
+        destination_postal_code,
+        destination_province_name,
+        carts: {
+          create: cart_item.map((id) => ({
+            cart: { connect: { id } },
+          })),
+        },
+      },
+    });
+
+    const transactionDetails = {
+      transaction_details: {
+        order_id: order.order_id,
+        gross_amount: order.gross_amount,
+      },
+      customer_details: {
+        first_name: order.name,
+        email: order.email,
+      },
+    };
+
+    const transactionToken = await snap.createTransaction(transactionDetails);
+
+    const transaction = await prisma.transaction.create({
+      data: {
+        order_id_midtrans: transactionDetails.transaction_details.order_id, // Simpan order_id Midtrans
+        gross_amount: transactionDetails.transaction_details.gross_amount,
+      },
+    });
+
     res.status(200).json({
       data: {
-        order: result.order,
-        token: result.transactionToken.token,
-        url: result.transactionToken.redirect_url,
-        transaction: result.transaction,
+        order: order.id,
+        token: transactionToken.token,
+        url: transactionToken.redirect_url,
+        transaction: transaction.id,
       },
     });
   } catch (error) {
