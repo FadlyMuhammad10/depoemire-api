@@ -1,4 +1,6 @@
 const { getOrders, updateStatusShipping } = require("../service/order-service");
+const dotenv = require("dotenv");
+dotenv.config();
 
 const get = async (req, res, next) => {
   try {

@@ -6,6 +6,8 @@ const {
   deleteProduct,
   changeStatus,
 } = require("../service/product-service");
+const dotenv = require("dotenv");
+dotenv.config();
 
 const create = async (req, res, next) => {
   try {

@@ -7,6 +7,8 @@ const productImagesRouter = require("./router/productImage-router");
 const participantsRouter = require("./router/participant-router");
 const transactionsRouter = require("./router/transaction-router");
 const rajaongkirRouter = require("./router/rajaongkir-router");
+const dotenv = require("dotenv");
+dotenv.config();
 
 var cors = require("cors");
 var path = require("path");

@@ -1,6 +1,8 @@
 const prisma = require("../lib/prisma");
 const bcrypt = require("bcrypt");
 const { createPayloadUser, createJwt } = require("../utils");
+const dotenv = require("dotenv");
+dotenv.config();
 
 const createUser = async (req, res, next) => {
   try {

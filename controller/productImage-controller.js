@@ -2,6 +2,8 @@ const {
   createProductImage,
   deleteProductImage,
 } = require("../service/productImage-service");
+const dotenv = require("dotenv");
+dotenv.config();
 
 const create = async (req, res, next) => {
   try {

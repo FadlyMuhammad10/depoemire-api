@@ -7,6 +7,9 @@ const {
   completeShippment,
 } = require("../service/participant-service");
 
+const dotenv = require("dotenv");
+dotenv.config();
+
 const uuid = require("uuid");
 
 let snap = new midtransClient.Snap({

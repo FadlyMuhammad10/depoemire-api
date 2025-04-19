@@ -4,6 +4,8 @@ const {
   updateCategory,
   deleteCategory,
 } = require("../service/category-service");
+const dotenv = require("dotenv");
+dotenv.config();
 
 const create = async (req, res, next) => {
   try {

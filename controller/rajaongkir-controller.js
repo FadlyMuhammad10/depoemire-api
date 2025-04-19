@@ -3,6 +3,8 @@ const {
   getCity,
   checkCost,
 } = require("../service/rajaongkir-service");
+const dotenv = require("dotenv");
+dotenv.config();
 
 const province = async (req, res, next) => {
   try {
