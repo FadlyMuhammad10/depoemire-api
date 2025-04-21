@@ -278,9 +278,54 @@ const order = async (req, res, next) => {
 
 const showOrderProduct = async (req, res, next) => {
   try {
-    const result = await showOrder(req);
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwtDecode(token);
+    const { userId } = decoded;
+
+    const order = await prisma.order.findMany({
+      where: {
+        user_id: userId,
+        status: "settlement",
+      },
+      select: {
+        id: true,
+        order_id: true,
+        status: true,
+        date: true,
+        gross_amount: true,
+        shipping_cost: true,
+        carts: {
+          select: {
+            id: true,
+            order_id: true,
+            cart: {
+              // Ini relasi ke tabel Cart
+              select: {
+                id: true,
+                product: {
+                  include: {
+                    images: {
+                      orderBy: {
+                        id: "asc",
+                      },
+                    },
+                  },
+                },
+                quantity: true,
+                isCheckout: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        id: "desc",
+      },
+    });
+
+    // const result = await showOrder(req);
     res.status(200).json({
-      data: result,
+      data: order,
     });
   } catch (error) {
     next(error);

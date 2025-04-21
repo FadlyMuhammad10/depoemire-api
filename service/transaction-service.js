@@ -117,6 +117,8 @@ module.exports = {
       //   where: { id: order.id },
       //   data: order,
       // });
+
+      res.status(200).json({ message: "Webhook processed successfully" });
     }
     // else if (webhookData.transaction_status === "pending") {
     //   // Perbarui status transaksi sesuai dengan yang diterima dari webhook
