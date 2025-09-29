@@ -29,9 +29,20 @@ module.exports = {
       orderBy: {
         id: "asc",
       },
+      include: {
+        _count: {
+          select: {
+            products: true,
+          },
+        },
+      },
     });
 
-    return categories;
+    return categories.map((category) => ({
+      id: category.id,
+      name: category.name,
+      productCount: category._count.products,
+    }));
   },
 
   updateCategory: async (req) => {
