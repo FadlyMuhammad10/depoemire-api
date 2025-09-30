@@ -43,10 +43,11 @@ model Product {
 }
 
 model ProductImage {
-  id         Int    @id @default(autoincrement())
+  id         Int      @id @default(autoincrement())
   image_url  String
   public_id  String
   product_id Int
+  isPrimary  Boolean?
 
   product Product @relation(fields: [product_id], references: [id])
 }

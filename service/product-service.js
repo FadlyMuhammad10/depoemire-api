@@ -4,17 +4,38 @@ const {
   createSchema,
   updateSchema,
 } = require("../validation/product-validation");
+const cloudinary = require("../lib/cloudinary");
 
 module.exports = {
   createProduct: async (req) => {
-    const validationResult = createSchema.safeParse(req.body);
+    const body = {
+      ...req.body,
+      price: Number(req.body.price),
+      stock: Number(req.body.stock),
+      category_id: Number(req.body.category_id),
+      primaryImageIndex: req.body.primaryImageIndex
+        ? Number(req.body.primaryImageIndex)
+        : 0,
+    };
+    const validationResult = createSchema.safeParse(body);
 
     if (!validationResult.success) {
       throw new ResponseError(400, validationResult.error.message);
     }
 
-    const { name, description, price, stock, category_id } =
+    const { name, description, price, stock, category_id, primaryImageIndex } =
       validationResult.data;
+
+    const uploads = [];
+    for (const file of req.files) {
+      const result = await cloudinary.uploader.upload(file.path, {
+        folder: "depoemire/product",
+      });
+      uploads.push({
+        url: result.secure_url,
+        public_id: result.public_id,
+      });
+    }
 
     const product = await prisma.product.create({
       data: {
@@ -25,7 +46,27 @@ module.exports = {
         category_id,
       },
     });
-    return product;
+
+    // Create product images
+    const productImages = [];
+    for (let i = 0; i < uploads.length; i++) {
+      const upload = uploads[i];
+      const isPrimary = i === primaryImageIndex;
+      const image = await prisma.productImage.create({
+        data: {
+          product_id: product.id,
+          image_url: upload.url,
+          public_id: upload.public_id,
+          isPrimary: isPrimary, // User pilih mana yang jadi primary
+        },
+      });
+      productImages.push(image);
+    }
+
+    return {
+      ...product,
+      images: productImages,
+    };
   },
 
   getProducts: async (req) => {

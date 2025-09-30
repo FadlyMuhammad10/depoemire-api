@@ -13,6 +13,12 @@ const createSchema = z.object({
     .number({ invalid_type_error: "Stock Product is required" })
     .min(1, "Stock Product is required"),
   category_id: z.number({ invalid_type_error: "Category Product is required" }),
+  primaryImageIndex: z.coerce
+    .number()
+    .int()
+    .min(0, "Primary image index must be 0 or greater")
+    .optional()
+    .default(0),
 });
 const updateSchema = z.object({
   name: z
@@ -27,6 +33,12 @@ const updateSchema = z.object({
     .number({ invalid_type_error: "Stock Product is required" })
     .min(1, "Stock Product is required"),
   category_id: z.number({ invalid_type_error: "Category Product is required" }),
+  primaryImageIndex: z.coerce
+    .number()
+    .int()
+    .min(0, "Primary image index must be 0 or greater")
+    .optional()
+    .default(0),
 });
 
 module.exports = { createSchema, updateSchema };

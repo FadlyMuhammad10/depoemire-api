@@ -2,6 +2,7 @@ const express = require("express");
 
 const auth = require("../middleware/auth");
 const admin = require("../middleware/authorization");
+const upload = require("../middleware/multer");
 
 const {
   create,
@@ -14,7 +15,13 @@ const {
 
 const router = express.Router();
 
-router.post("/api/product/create", auth, admin, create);
+router.post(
+  "/api/product/create",
+  upload.array("images", 5),
+  auth,
+  admin,
+  create
+);
 router.get("/api/products", auth, admin, getAll);
 router.get("/api/product/:id", auth, admin, getOne);
 router.put("/api/product/update/:id", auth, admin, update);
