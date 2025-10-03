@@ -24,7 +24,13 @@ router.post(
 );
 router.get("/api/products", auth, admin, getAll);
 router.get("/api/product/:id", auth, admin, getOne);
-router.put("/api/product/update/:id", auth, admin, update);
+router.put(
+  "/api/product/update/:id",
+  upload.array("images", 5),
+  auth,
+  admin,
+  update
+);
 router.put("/api/product/change/:id", auth, admin, change);
 router.delete("/api/product/destroy/:id", auth, admin, destroy);
 

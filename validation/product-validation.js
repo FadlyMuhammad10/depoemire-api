@@ -19,6 +19,7 @@ const createSchema = z.object({
     .min(0, "Primary image index must be 0 or greater")
     .optional()
     .default(0),
+  status: z.boolean().optional().default(false),
 });
 const updateSchema = z.object({
   name: z
@@ -39,6 +40,7 @@ const updateSchema = z.object({
     .min(0, "Primary image index must be 0 or greater")
     .optional()
     .default(0),
+  status: z.boolean().optional().default(false),
 });
 
 module.exports = { createSchema, updateSchema };
