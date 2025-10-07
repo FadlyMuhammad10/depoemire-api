@@ -2,6 +2,7 @@ const {
   getProvince,
   getCity,
   checkCost,
+  getCityDetail,
 } = require("../service/rajaongkir-service");
 const dotenv = require("dotenv");
 dotenv.config();
@@ -19,7 +20,18 @@ const province = async (req, res, next) => {
 
 const city = async (req, res, next) => {
   try {
-    const result = await getCity(req);
+    const result = await getCity(req.params.provinceId);
+    res.status(200).json({
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const cityDetail = async (req, res, next) => {
+  try {
+    const result = await getCityDetail(req.params.cityId);
     res.status(200).json({
       data: result,
     });
@@ -39,4 +51,4 @@ const shippingCost = async (req, res, next) => {
   }
 };
 
-module.exports = { province, city, shippingCost };
+module.exports = { province, city, shippingCost, cityDetail };

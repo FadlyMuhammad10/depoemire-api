@@ -11,6 +11,7 @@ const {
   showOrderProduct,
   completeShipping,
   showDetailOrderProduct,
+  updateCartProduct,
 } = require("../controller/participant-controller");
 
 const router = express.Router();
@@ -20,6 +21,7 @@ router.get("/api/participant/product/:id", showDetail);
 
 router.post("/api/participant/cart", auth, add);
 router.get("/api/participant/carts", auth, showCartProduct);
+router.put("/api/participant/cart/update/:id", auth, updateCartProduct);
 router.delete("/api/participant/cart/delete/:id", auth, deleteCartProduct);
 
 router.post("/api/participant/order/create", auth, order);

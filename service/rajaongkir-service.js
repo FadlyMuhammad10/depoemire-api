@@ -4,7 +4,7 @@ const RAJAONGKIR_API_KEY = process.env.RAJAONGKIR_API_KEY;
 module.exports = {
   getProvince: async (req) => {
     const result = await axios.get(
-      `https://api.rajaongkir.com/starter/province`,
+      `https://rajaongkir.komerce.id/api/v1/destination/province`,
       {
         headers: {
           key: RAJAONGKIR_API_KEY,
@@ -12,16 +12,19 @@ module.exports = {
       }
     );
 
-    return result.data.rajaongkir.results;
+    return result.data;
   },
-  getCity: async (req) => {
-    const result = await axios.get(`https://api.rajaongkir.com/starter/city`, {
-      headers: {
-        key: RAJAONGKIR_API_KEY,
-      },
-    });
+  getCity: async (provinceId) => {
+    const result = await axios.get(
+      `https://rajaongkir.komerce.id/api/v1/destination/city/${provinceId}`,
+      {
+        headers: {
+          key: RAJAONGKIR_API_KEY,
+        },
+      }
+    );
 
-    return result.data.rajaongkir.results;
+    return result.data;
   },
 
   calculateShippingCost: async (origin, destination, weight, courier) => {
@@ -45,24 +48,20 @@ module.exports = {
 
   getCityDetail: async (cityId) => {
     const result = await axios.get(
-      `https://api.rajaongkir.com/starter/city?id=${cityId}`,
+      `https://rajaongkir.komerce.id/api/v1/destination/district/${cityId}`,
       {
         headers: {
           key: RAJAONGKIR_API_KEY,
         },
       }
     );
-    // Ambil nama provinsi, kota dan kode pos dari response
-    const provinceName = result.data.rajaongkir.results.province;
-    const cityName = result.data.rajaongkir.results.city_name;
-    const postalCode = result.data.rajaongkir.results.postal_code;
 
-    return { cityName, postalCode, provinceName };
+    return result.data;
   },
   checkCost: async (req) => {
     const { origin, destination, weight, courier } = req.body;
     const result = await axios.post(
-      `https://api.rajaongkir.com/starter/cost`,
+      `https://rajaongkir.komerce.id/api/v1/calculate/district/domestic-cost`,
       {
         origin, // ID kota asal
         destination, // ID kota tujuan
@@ -72,10 +71,11 @@ module.exports = {
       {
         headers: {
           key: RAJAONGKIR_API_KEY,
+          "Content-Type": "application/x-www-form-urlencoded",
         },
       }
     );
 
-    return result.data.rajaongkir.results[0].costs[1].cost[0].value;
+    return result.data;
   },
 };

@@ -176,6 +176,45 @@ const showCartProduct = async (req, res, next) => {
   }
 };
 
+const updateCartProduct = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+    const decoded = jwtDecode(token);
+    const { userId } = decoded;
+
+    const { id } = req.params;
+    const { quantity } = req.body;
+
+    const cart = await prisma.cart.findUnique({
+      where: {
+        id: Number(id),
+        user_id: userId,
+      },
+    });
+
+    if (!cart) {
+      throw new ResponseError(400, "cart not found");
+    }
+
+    await prisma.cart.update({
+      where: {
+        id: Number(id),
+        user_id: userId,
+      },
+      data: {
+        quantity,
+      },
+    });
+
+    res.status(200).json({
+      data: cart,
+    });
+  } catch (error) {
+    console.log("error", error);
+    next(error);
+  }
+};
+
 const deleteCartProduct = async (req, res, next) => {
   try {
     const token = req.headers.authorization.split(" ")[1];
@@ -364,4 +403,5 @@ module.exports = {
   showOrderProduct,
   showDetailOrderProduct,
   completeShipping,
+  updateCartProduct,
 };
