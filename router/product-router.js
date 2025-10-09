@@ -10,7 +10,6 @@ const {
   getOne,
   update,
   destroy,
-  change,
 } = require("../controller/product-controller");
 
 const router = express.Router();
@@ -31,7 +30,6 @@ router.put(
   admin,
   update
 );
-router.put("/api/product/change/:id", auth, admin, change);
 router.delete("/api/product/destroy/:id", auth, admin, destroy);
 
 module.exports = router;

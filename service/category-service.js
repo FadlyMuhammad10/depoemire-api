@@ -3,7 +3,7 @@ const {
   updateSchema,
 } = require("../validation/category-validation");
 const { ResponseError } = require("../error/response-error");
-const prisma = require("../lib/prisma");
+const categoryRepository = require("../repository/categoryRepository");
 
 module.exports = {
   createCategory: async (req) => {
@@ -15,28 +15,13 @@ module.exports = {
 
     const { name } = validationResult.data;
 
-    const category = await prisma.category.create({
-      data: {
-        name,
-      },
-    });
+    const category = await categoryRepository.createCategory({ name });
 
     return category;
   },
 
   getCategories: async () => {
-    const categories = await prisma.category.findMany({
-      orderBy: {
-        id: "asc",
-      },
-      include: {
-        _count: {
-          select: {
-            products: true,
-          },
-        },
-      },
-    });
+    const categories = await categoryRepository.findAll();
 
     return categories.map((category) => ({
       id: category.id,
@@ -54,25 +39,14 @@ module.exports = {
     const { id } = req.params;
     const { name } = validationResult.data;
 
-    const category = await prisma.category.update({
-      where: {
-        id: Number(id),
-      },
-      data: {
-        name,
-      },
-    });
+    const category = await categoryRepository.updateCategory(id, { name });
     return category;
   },
 
   deleteCategory: async (req) => {
     const { id } = req.params;
 
-    const category = await prisma.category.delete({
-      where: {
-        id: Number(id),
-      },
-    });
+    const category = await categoryRepository.deleteCategory(id);
 
     return category;
   },

@@ -4,7 +4,6 @@ const {
   getOneProduct,
   updateProduct,
   deleteProduct,
-  changeStatus,
 } = require("../service/product-service");
 const dotenv = require("dotenv");
 dotenv.config();
@@ -64,15 +63,4 @@ const destroy = async (req, res, next) => {
   }
 };
 
-const change = async (req, res, next) => {
-  try {
-    const result = await changeStatus(req);
-    res.status(200).json({
-      data: result,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-module.exports = { create, getAll, getOne, update, destroy, change };
+module.exports = { create, getAll, getOne, update, destroy };

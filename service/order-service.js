@@ -1,28 +1,9 @@
 const { ResponseError } = require("../error/response-error");
 const prisma = require("../lib/prisma");
+const orderRepository = require("../repository/orderRepository");
 module.exports = {
   getOrders: async (req) => {
-    const orders = await prisma.order.findMany({
-      include: {
-        user: {
-          select: {
-            name: true,
-            email: true,
-            phone: true,
-          },
-        },
-        cart: {
-          include: {
-            product: {
-              select: {
-                name: true,
-                price: true,
-              },
-            },
-          },
-        },
-      },
-    });
+    const orders = await orderRepository.findAll();
 
     return orders;
   },
@@ -36,14 +17,9 @@ module.exports = {
         "Status harus processing, delivered, completed"
       );
     }
-    const order = await prisma.order.update({
-      where: {
-        id: Number(id),
-      },
-      data: {
-        status_shipment,
-        receipt,
-      },
+    const order = await orderRepository.updateOrder(id, {
+      status_shipment,
+      receipt,
     });
     return order;
   },

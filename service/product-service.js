@@ -1,10 +1,11 @@
 const { ResponseError } = require("../error/response-error");
-const prisma = require("../lib/prisma");
 const {
   createSchema,
   updateSchema,
 } = require("../validation/product-validation");
 const cloudinary = require("../lib/cloudinary");
+const productRepository = require("../repository/productRepository");
+const productImgRepository = require("../repository/productImageRepository");
 
 module.exports = {
   createProduct: async (req) => {
@@ -45,15 +46,13 @@ module.exports = {
       });
     }
 
-    const product = await prisma.product.create({
-      data: {
-        name,
-        description,
-        price,
-        stock,
-        category_id,
-        status,
-      },
+    const product = await productRepository.createProduct({
+      name,
+      description,
+      price,
+      stock,
+      category_id,
+      status,
     });
 
     // Create product images
@@ -61,13 +60,11 @@ module.exports = {
     for (let i = 0; i < uploads.length; i++) {
       const upload = uploads[i];
       const isPrimary = i === primaryImageIndex;
-      const image = await prisma.productImage.create({
-        data: {
-          product_id: product.id,
-          image_url: upload.url,
-          public_id: upload.public_id,
-          isPrimary: isPrimary, // User pilih mana yang jadi primary
-        },
+      const image = await productImgRepository.createImage({
+        product_id: product.id,
+        image_url: upload.url,
+        public_id: upload.public_id,
+        isPrimary: isPrimary,
       });
       productImages.push(image);
     }
@@ -79,46 +76,14 @@ module.exports = {
   },
 
   getProducts: async (req) => {
-    const products = await prisma.product.findMany({
-      include: {
-        categories: {
-          select: {
-            name: true,
-          },
-        },
-        images: {
-          orderBy: {
-            id: "asc",
-          },
-        },
-      },
-      orderBy: {
-        id: "desc",
-      },
-    });
+    const products = await productRepository.findAll();
 
     return products;
   },
 
   getOneProduct: async (req) => {
     const { id } = req.params;
-    const product = await prisma.product.findUnique({
-      where: {
-        id: Number(id),
-      },
-      include: {
-        categories: {
-          select: {
-            name: true,
-          },
-        },
-        images: {
-          orderBy: {
-            id: "asc",
-          },
-        },
-      },
-    });
+    const product = await productRepository.findOne(id);
     return product;
   },
 
@@ -135,6 +100,7 @@ module.exports = {
         : 0,
       status: req.body.status ? Boolean(req.body.status) : false,
     };
+    console.log("status", req.body.status);
     const validationResult = updateSchema.safeParse(body);
 
     if (!validationResult.success) {
@@ -153,14 +119,7 @@ module.exports = {
     } = validationResult.data;
 
     // Cek apakah product ada
-    const existingProduct = await prisma.product.findUnique({
-      where: {
-        id: Number(id),
-      },
-      include: {
-        images: true,
-      },
-    });
+    const existingProduct = await productRepository.findOne(id);
 
     if (!existingProduct) {
       throw new ResponseError(404, "Product not found");
@@ -176,11 +135,7 @@ module.exports = {
       }
 
       // Hapus record gambar lama dari database
-      await prisma.productImage.deleteMany({
-        where: {
-          product_id: Number(id),
-        },
-      });
+      await productImgRepository.deleteMany(id);
 
       // Upload gambar baru ke Cloudinary
       const uploads = [];
@@ -198,29 +153,22 @@ module.exports = {
       for (let i = 0; i < uploads.length; i++) {
         const upload = uploads[i];
         const isPrimary = i === primaryImageIndex;
-        await prisma.productImage.create({
-          data: {
-            product_id: Number(id),
-            image_url: upload.url,
-            public_id: upload.public_id,
-            isPrimary: isPrimary,
-          },
+        await productImgRepository.createProductImage({
+          product_id: id,
+          image_url: upload.url,
+          public_id: upload.public_id,
+          isPrimary: isPrimary,
         });
       }
     }
 
-    const product = await prisma.product.update({
-      where: {
-        id: Number(id),
-      },
-      data: {
-        name,
-        description,
-        price,
-        stock,
-        category_id,
-        status,
-      },
+    const product = await productRepository.updateProduct(id, {
+      name,
+      description,
+      price,
+      stock,
+      category_id,
+      status,
     });
 
     return product;
@@ -229,14 +177,7 @@ module.exports = {
   deleteProduct: async (req) => {
     const { id } = req.params;
 
-    const existingProduct = await prisma.product.findUnique({
-      where: {
-        id: Number(id),
-      },
-      include: {
-        images: true,
-      },
-    });
+    const existingProduct = await productRepository.findOne(id);
 
     if (!existingProduct) {
       throw new ResponseError(404, "Product not found");
@@ -250,35 +191,10 @@ module.exports = {
     }
 
     // Hapus record gambar dari database
-    await prisma.productImage.deleteMany({
-      where: {
-        product_id: Number(id),
-      },
-    });
+    await productImgRepository.deleteMany(id);
 
-    const product = await prisma.product.delete({
-      where: {
-        id: Number(id),
-      },
-    });
+    const product = await productRepository.deleteProduct(id);
 
-    return product;
-  },
-
-  changeStatus: async (req) => {
-    const { id } = req.params;
-    const { status } = req.body;
-    if (![true, false].includes(status)) {
-      throw new ResponseError(400, "Status harus true atau false");
-    }
-    const product = await prisma.product.update({
-      where: {
-        id: Number(id),
-      },
-      data: {
-        status,
-      },
-    });
     return product;
   },
 };

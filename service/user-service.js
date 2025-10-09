@@ -1,75 +1,30 @@
 const bcrypt = require("bcrypt");
-const { signupSchema, signinSchema } = require("../validation/user-validation");
 const { ResponseError } = require("../error/response-error");
-const prisma = require("../lib/prisma");
 const { createJwt, createPayloadUser } = require("../utils");
+const userRepository = require("../repository/userRepository");
 
-const createUser = async (req, res) => {
-  const validationResult = signupSchema.safeParse(req.body);
-
-  if (!validationResult.success) {
-    throw new ResponseError(400, validationResult.error.message);
-  }
-
-  const { name, email, password } = validationResult.data;
+exports.register = async ({ name, email, password }) => {
+  const existingUser = await userRepository.findByEmail(email);
+  if (existingUser) throw new ResponseError(400, "Email already exist");
 
   const hash = await bcrypt.hash(password, 10);
-
-  // check email already exist
-  const emailExist = await prisma.user.findUnique({
-    where: {
-      email,
-    },
+  const newUser = await userRepository.createUser({
+    name,
+    email,
+    password: hash,
   });
 
-  if (emailExist) {
-    return res.status(400).json({ errors: "Email already exist" });
-  }
-
-  const user = await prisma.user.create({
-    data: {
-      name,
-      email,
-      password: hash,
-    },
-  });
-
-  delete user.password;
-
-  return user;
+  delete newUser.password;
+  return newUser;
 };
 
-const loginUser = async (req) => {
-  const validationResult = signinSchema.safeParse(req.body);
-
-  if (!validationResult.success) {
-    throw new ResponseError(400, validationResult.error.message);
-  }
-
-  const { email, password } = validationResult.data;
-  if (!email || !password) {
-    throw new ResponseError(400, "Email and password are required");
-  }
-
-  const user = await prisma.user.findUnique({
-    where: {
-      email,
-    },
-  });
-
-  if (!user) {
-    throw new ResponseError(403, "Invalid email or password");
-  }
+exports.login = async ({ email, password }) => {
+  const user = await userRepository.findByEmail(email);
+  if (!user) throw new ResponseError(403, "Invalid credentials");
 
   const isMatch = await bcrypt.compare(password, user.password);
-
-  if (!isMatch) {
-    throw new ResponseError(403, "Invalid email or password");
-  }
+  if (!isMatch) throw new ResponseError(400, "Invalid email or password");
 
   const token = createJwt({ payload: createPayloadUser(user) });
-
   return token;
 };
-
-module.exports = { createUser, loginUser };
