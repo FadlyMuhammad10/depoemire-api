@@ -1,4 +1,5 @@
 const { ResponseError } = require("../error/response-error");
+const prisma = require("../lib/prisma");
 const {
   createSchema,
   updateSchema,
@@ -46,33 +47,38 @@ module.exports = {
       });
     }
 
-    const product = await productRepository.createProduct({
-      name,
-      description,
-      price,
-      stock,
-      category_id,
-      status,
+    // jalankan transaksi supaya bisa rollback/batching
+    $result = await prisma.$transaction(async (tx) => {
+      const product = await productRepository.createProduct(tx, {
+        name,
+        description,
+        price,
+        stock,
+        category_id,
+        status,
+      });
+
+      // Create product images
+      const productImages = [];
+      for (let i = 0; i < uploads.length; i++) {
+        const upload = uploads[i];
+        const isPrimary = i === primaryImageIndex;
+        const image = await productImgRepository.createImage(tx, {
+          product_id: product.id,
+          image_url: upload.url,
+          public_id: upload.public_id,
+          isPrimary: isPrimary,
+        });
+        productImages.push(image);
+      }
+
+      return {
+        ...product,
+        images: productImages,
+      };
     });
 
-    // Create product images
-    const productImages = [];
-    for (let i = 0; i < uploads.length; i++) {
-      const upload = uploads[i];
-      const isPrimary = i === primaryImageIndex;
-      const image = await productImgRepository.createImage({
-        product_id: product.id,
-        image_url: upload.url,
-        public_id: upload.public_id,
-        isPrimary: isPrimary,
-      });
-      productImages.push(image);
-    }
-
-    return {
-      ...product,
-      images: productImages,
-    };
+    return $result;
   },
 
   getProducts: async (req) => {
@@ -88,6 +94,7 @@ module.exports = {
   },
 
   updateProduct: async (req) => {
+    console.log("req", req);
     const body = {
       ...req.body,
       price: req.body.price ? Number(req.body.price) : undefined,
@@ -100,7 +107,6 @@ module.exports = {
         : 0,
       status: req.body.status ? Boolean(req.body.status) : false,
     };
-    console.log("status", req.body.status);
     const validationResult = updateSchema.safeParse(body);
 
     if (!validationResult.success) {
@@ -125,53 +131,92 @@ module.exports = {
       throw new ResponseError(404, "Product not found");
     }
 
+    let uploads = [];
+
     // Jika ada file baru yang diupload, hapus gambar lama dari Cloudinary
     if (req.files && req.files.length > 0) {
-      // Hapus gambar lama dari Cloudinary
-      for (const image of existingProduct.images) {
-        if (image.public_id) {
-          await cloudinary.uploader.destroy(image.public_id);
+      uploads = await Promise.all(
+        req.files.map(async (file) => {
+          const result = await cloudinary.uploader.upload(file.path, {
+            folder: "depoemire/product",
+          });
+          return {
+            url: result.secure_url,
+            public_id: result.public_id,
+          };
+        })
+      );
+    }
+
+    const existingImageIds =
+      req.body.existingImageIds &&
+      Array.isArray(JSON.parse(req.body.existingImageIds))
+        ? JSON.parse(req.body.existingImageIds).map(Number)
+        : [];
+
+    const updatedProduct = await prisma.$transaction(async (tx) => {
+      // Hapus hanya gambar yang tidak ada di existingImageIds
+      const imagesToDelete = existingProduct.images.filter(
+        (img) => !existingImageIds.includes(img.id)
+      );
+      for (const img of imagesToDelete) {
+        await productImgRepository.deleteImage(tx, img.id);
+      }
+      // Upload gambar baru ke database
+      let allImages = [
+        ...existingProduct.images.filter((img) =>
+          existingImageIds.includes(img.id)
+        ),
+      ];
+
+      if (uploads.length > 0) {
+        for (let i = 0; i < uploads.length; i++) {
+          const upload = uploads[i];
+          const newImage = await productImgRepository.createImage(tx, {
+            product_id: Number(id),
+            image_url: upload.url,
+            public_id: upload.public_id,
+            isPrimary: false, // sementara false semua
+          });
+          allImages.push(newImage);
         }
       }
 
-      // Hapus record gambar lama dari database
-      await productImgRepository.deleteMany(id);
+      // 🔥 pastikan hanya satu gambar yang isPrimary = true
+      if (allImages.length > 0) {
+        const primaryImage = allImages[primaryImageIndex] || allImages[0];
 
-      // Upload gambar baru ke Cloudinary
-      const uploads = [];
-      for (const file of req.files) {
-        const result = await cloudinary.uploader.upload(file.path, {
-          folder: "depoemire/product",
+        await tx.productImage.updateMany({
+          where: { product_id: Number(id) },
+          data: { isPrimary: false },
         });
-        uploads.push({
-          url: result.secure_url,
-          public_id: result.public_id,
+
+        await tx.productImage.update({
+          where: { id: primaryImage.id },
+          data: { isPrimary: true },
         });
       }
+      const product = await productRepository.updateProduct(tx, id, {
+        name,
+        description,
+        price,
+        stock,
+        category_id,
+        status,
+      });
 
-      // Buat record gambar baru di database
-      for (let i = 0; i < uploads.length; i++) {
-        const upload = uploads[i];
-        const isPrimary = i === primaryImageIndex;
-        await productImgRepository.createProductImage({
-          product_id: id,
-          image_url: upload.url,
-          public_id: upload.public_id,
-          isPrimary: isPrimary,
-        });
+      return product;
+    });
+
+    if (existingProduct.images) {
+      for (const image of existingProduct.images) {
+        if (!existingImageIds.includes(image.id) && image.public_id) {
+          await cloudinary.uploader.destroy(image.public_id);
+        }
       }
     }
 
-    const product = await productRepository.updateProduct(id, {
-      name,
-      description,
-      price,
-      stock,
-      category_id,
-      status,
-    });
-
-    return product;
+    return updatedProduct;
   },
 
   deleteProduct: async (req) => {

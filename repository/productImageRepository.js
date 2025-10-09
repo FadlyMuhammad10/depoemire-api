@@ -1,15 +1,21 @@
-const prisma = require("../lib/prisma");
-
-exports.createImage = async (data) => {
-  return prisma.productImage.create({
+exports.createImage = async (tx, data) => {
+  return tx.productImage.create({
     data,
   });
 };
 
-exports.deleteMany = async (pid) => {
-  return prisma.productImage.deleteMany({
+exports.deleteMany = async (tx, pid) => {
+  return tx.productImage.deleteMany({
     where: {
       product_id: Number(pid),
+    },
+  });
+};
+
+exports.deleteImage = async (tx, imageId) => {
+  return tx.productImage.delete({
+    where: {
+      id: Number(imageId),
     },
   });
 };

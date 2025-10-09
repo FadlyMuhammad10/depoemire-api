@@ -40,14 +40,14 @@ exports.findOne = async (id) => {
   });
 };
 
-exports.createProduct = async (data) => {
-  return prisma.product.create({
+exports.createProduct = async (tx, data) => {
+  return tx.product.create({
     data,
   });
 };
 
-exports.updateProduct = async (id, data) => {
-  return prisma.product.update({
+exports.updateProduct = async (tx, id, data) => {
+  return tx.product.update({
     where: {
       id: Number(id),
     },
