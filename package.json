@@ -5,6 +5,7 @@
   "scripts": {
     "prisma:generate": "npx prisma generate",
     "prisma:push": "npx prisma db push",
+    "prisma:migrate": "npx prisma migrate deploy",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon index.js",
     "start": "node index.js"
